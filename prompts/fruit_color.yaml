@@ -1,5 +1,0 @@
-_type: prompt
-input_variables:
-  - fruit
-template: |
-  {fruit}의 색깔이 뭐야?
