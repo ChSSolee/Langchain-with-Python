@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>12. RAG</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>10-03. 검색기 (셀프 쿼리, 시간 가중 벡터저장소)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,65 +7511,26 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c4ccea53">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Retrieval-Augmented-Generation(RAG)">Retrieval Augmented Generation(RAG)<a class="anchor-link" href="#Retrieval-Augmented-Generation(RAG)">¶</a></h1><ul>
-<li><strong>RAG는 풍부한 정보를 담고 있는 대규모 문서 데이터베이스에서 관련 정보를 검색하고, 이를 통해 언어 모델이 더 정확하고 상세한 답변을 생성</strong><ul>
-<li>예)  최신 뉴스 이벤트나 특정 분야의 전문 지식과 같은 주제에 대해 물어보면, RAG는 관련 문서를 찾아 그 내용을 바탕으로 답변을 구성</li>
-</ul>
-</li>
-</ul>
-<br/>
-<h3 id="RAG%EC%9D%98-8%EB%8B%A8%EA%B3%84-%ED%94%84%EB%A1%9C%EC%84%B8%EC%8A%A4">RAG의 8단계 프로세스<a class="anchor-link" href="#RAG%EC%9D%98-8%EB%8B%A8%EA%B3%84-%ED%94%84%EB%A1%9C%EC%84%B8%EC%8A%A4">¶</a></h3><br/>
-<h4 id="%EC%82%AC%EC%A0%84-%EC%A4%80%EB%B9%84%EB%8B%A8%EA%B3%84">사전 준비단계<a class="anchor-link" href="#%EC%82%AC%EC%A0%84-%EC%A4%80%EB%B9%84%EB%8B%A8%EA%B3%84">¶</a></h4><ol>
-<li><strong>도큐먼트 로드 (Document Loader)</strong>: 외부 데이터 소스에서 필요한 문서를 로드하고 초기 처리</li>
-<li><strong>텍스트 분할 (Text Splitter)</strong>: 로드된 문서를 처리 가능한 작은 단위로 분할</li>
-<li><strong>임베딩 (Embedding)</strong>: 각 문서 또는 문서의 일부를 벡터 형태로 변환하여, 문서의 의미를 수치화</li>
-<li><strong>벡터스토어(Vector Store) 저장</strong>: 임베딩된 벡터들을 데이터베이스에 저장</li>
-</ol>
-<img alt="No description has been provided for this image" src="https://static.wikidocs.net/images/page/233780/rag-graphic-1.png" width="600"/>
-<br/>
-<h4 id="%EB%9F%B0%ED%83%80%EC%9E%84(RunTime-%EB%8B%A8%EA%B3%84)">런타임(RunTime 단계)<a class="anchor-link" href="#%EB%9F%B0%ED%83%80%EC%9E%84(RunTime-%EB%8B%A8%EA%B3%84)">¶</a></h4><ol>
-<li><strong>검색기 (Retriever)</strong>: 질문이 주어지면, 이와 관련된 벡터를 벡터 데이터베이스에서 검색</li>
-<li><strong>프롬프트 (Prompt)</strong>: 검색된 정보를 바탕으로 언어 모델을 위한 질문을 구성. 이는 정보를 바탕으로 어떻게 질문할지 결정하는 과정입니다.</li>
-<li><strong>LLM (Large Language Model)</strong>: 구성된 프롬프트를 사용하여 언어 모델이 답변을 생성</li>
-<li><strong>체인(Chain) 생성</strong>: 이전의 모든 과정의 하나의 파이프라인으로 묶어주는 체인(Chain) 을 생성</li>
-</ol>
-<img alt="No description has been provided for this image" src="https://static.wikidocs.net/images/page/233780/rag-graphic-2.png" width="600"/>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=28a0f2ea">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5db44142">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<hr/>
-<br/>
-<h2 id="PDF-%EB%AC%B8%EC%84%9C-%EA%B8%B0%EB%B0%98-QA(Question-Answer)">PDF 문서 기반 QA(Question-Answer)<a class="anchor-link" href="#PDF-%EB%AC%B8%EC%84%9C-%EA%B8%B0%EB%B0%98-QA(Question-Answer)">¶</a></h2><ul>
-<li><p>LangChain으로 구축한 애플리케이션은 여러 단계에 걸쳐 LLM 호출을 여러 번 사용</p>
-<p>$\rightarrow$ 이러한 애플리케이션이 점점 더 복잡해짐에 따라, 체인이나 에이전트 내부에서 정확히 무슨 일이 일어나고 있는지 조사할 수 있는 능력이 매우 중요</p>
-<p>$\rightarrow$ LangSmith를 사용</p>
-</li>
+<h3 id="SelfQueryRetriever"><code>SelfQueryRetriever</code><a class="anchor-link" href="#SelfQueryRetriever">¶</a></h3><ul>
+<li><strong>메타데이터 필드 와 문서 내용에 대한 간단한 설명을 미리 제공</strong></li>
+<li><code>AttributeInfo</code> : <strong>메타데이터 필드에 대한 정보를 정의</strong></li>
 </ul>
-<br/>
-<h3 id="RAG-%EA%B8%B0%EB%B3%B8-%ED%8C%8C%EC%9D%B4%ED%94%84%EB%9D%BC%EC%9D%B8">RAG 기본 파이프라인<a class="anchor-link" href="#RAG-%EA%B8%B0%EB%B3%B8-%ED%8C%8C%EC%9D%B4%ED%94%84%EB%9D%BC%EC%9D%B8">¶</a></h3>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b2681211">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=389633dc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
@@ -7585,14 +7546,14 @@ a.anchor-link {
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[21]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[1]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>True</pre>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b0af0cf7">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b79bae9a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7600,31 +7561,13 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">PyMuPDFLoader</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">FAISS</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrOutputParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnablePassthrough</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptTemplate</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span><span class="p">,</span> <span class="n">OpenAIEmbeddings</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.query_constructor.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttributeInfo</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7ccb650b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="1.-%EB%AC%B8%EC%84%9C-%EB%A1%9C%EB%93%9C">1. 문서 로드<a class="anchor-link" href="#1.-%EB%AC%B8%EC%84%9C-%EB%A1%9C%EB%93%9C">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=39561ab4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cfb9d44d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7632,40 +7575,43 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">loader</span> <span class="o">=</span> <span class="n">PyMuPDFLoader</span><span class="p">(</span><span class="s2">"data/SPRI_AI_Brief_2023년12월호_F.pdf"</span><span class="p">)</span>
-<span class="n">docs</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"문서의 페이지수: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">metadata_field_info</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">AttributeInfo</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"category"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"The category of the cosmetic product. One of ['스킨케어', '메이크업', '클렌징', '선케어']"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s2">"string"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">AttributeInfo</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"year"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"The year the cosmetic product was released"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s2">"integer"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">AttributeInfo</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"user_rating"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"A user rating for the cosmetic product, ranging from 1 to 5"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s2">"float"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>문서의 페이지수: 23
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4262bc8a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c7dea9de">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h4 id="2.-%EB%AC%B8%EC%84%9C-%EB%B6%84%ED%95%A0(Split-Documents)">2. 문서 분할(Split Documents)<a class="anchor-link" href="#2.-%EB%AC%B8%EC%84%9C-%EB%B6%84%ED%95%A0(Split-Documents)">¶</a></h4>
+<ul>
+<li><strong>리트리버 생성</strong></li>
+</ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8ccb2472">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b1ab19e4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7673,40 +7619,14 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">text_splitter</span> <span class="o">=</span> <span class="n">RecursiveCharacterTextSplitter</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">split_documents</span> <span class="o">=</span> <span class="n">text_splitter</span><span class="o">.</span><span class="n">split_documents</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"분할된 청크의수: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">split_documents</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.retrievers.self_query.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelfQueryRetriever</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>분할된 청크의수: 43
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4a0fab75">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="3.-%EC%9E%84%EB%B2%A0%EB%94%A9(Embedding)-%EC%83%9D%EC%84%B1">3. 임베딩(Embedding) 생성<a class="anchor-link" href="#3.-%EC%9E%84%EB%B2%A0%EB%94%A9(Embedding)-%EC%83%9D%EC%84%B1">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9e56e834">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0e70d3f6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7714,127 +7634,25 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">OpenAIEmbeddings</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4o-mini"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1949cb20">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="4.-DB-%EC%83%9D%EC%84%B1(Create-DB)-%EB%B0%8F-%EC%A0%80%EC%9E%A5">4. DB 생성(Create DB) 및 저장<a class="anchor-link" href="#4.-DB-%EC%83%9D%EC%84%B1(Create-DB)-%EB%B0%8F-%EC%A0%80%EC%9E%A5">¶</a></h4><ul>
-<li>벡터스토어를 생성</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a0febe58">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ff30cc05">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">split_documents</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">embeddings</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=642ea64c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="5.-%EA%B2%80%EC%83%89%EA%B8%B0(Retriever)-%EC%83%9D%EC%84%B1">5. 검색기(Retriever) 생성<a class="anchor-link" href="#5.-%EA%B2%80%EC%83%89%EA%B8%B0(Retriever)-%EC%83%9D%EC%84%B1">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2e7ca311">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">as_retriever</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5fd1966f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"삼성전자가 자체 개발한 AI 의 이름은?"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>[Document(id='f634b54c-a0c8-4568-9936-bf881c7f0d30', metadata={'producer': 'Hancom PDF 1.3.0.542', 'creator': 'Hwp 2018 10.0.0.13462', 'creationdate': '2023-12-08T13:28:38+09:00', 'source': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'file_path': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'total_pages': 23, 'format': 'PDF 1.4', 'title': '', 'author': 'dj', 'subject': '', 'keywords': '', 'moddate': '2023-12-08T13:28:38+09:00', 'trapped': '', 'modDate': "D:20231208132838+09'00'", 'creationDate': "D:20231208132838+09'00'", 'page': 12}, page_content='SPRi AI Brief |  \n2023-12월호\n10\n삼성전자, 자체 개발 생성 AI ‘삼성 가우스’ 공개\nn 삼성전자가 온디바이스에서 작동 가능하며 언어, 코드, 이미지의 3개 모델로 구성된 자체 개발 생성 \nAI 모델 ‘삼성 가우스’를 공개\nn 삼성전자는 삼성 가우스를 다양한 제품에 단계적으로 탑재할 계획으로, 온디바이스 작동이 가능한 \n삼성 가우스는 외부로 사용자 정보가 유출될 위험이 없다는 장점을 보유\nKEY Contents\n£ 언어, 코드, 이미지의 3개 모델로 구성된 삼성 가우스, 온디바이스 작동 지원\nn 삼성전자가 2023년 11월 8일 열린 ‘삼성 AI 포럼 2023’ 행사에서 자체 개발한 생성 AI 모델 \n‘삼성 가우스’를 최초 공개\n∙정규분포 이론을 정립한 천재 수학자 가우스(Gauss)의 이름을 본뜬 삼성 가우스는 다양한 상황에 \n최적화된 크기의 모델 선택이 가능\n∙삼성 가우스는 라이선스나 개인정보를 침해하지 않는 안전한 데이터를 통해 학습되었으며, \n온디바이스에서 작동하도록 설계되어 외부로 사용자의 정보가 유출되지 않는 장점을 보유\n∙삼성전자는 삼성 가우스를 활용한 온디바이스 AI 기술도 소개했으며, 생성 AI 모델을 다양한 제품에 \n단계적으로 탑재할 계획\nn 삼성 가우스는 △텍스트를 생성하는 언어모델 △코드를 생성하는 코드 모델 △이미지를 생성하는 \n이미지 모델의 3개 모델로 구성\n∙언어 모델은 클라우드와 온디바이스 대상 다양한 모델로 구성되며, 메일 작성, 문서 요약, 번역 업무의 \n처리를 지원\n∙코드 모델 기반의 AI 코딩 어시스턴트 ‘코드아이(code.i)’는 대화형 인터페이스로 서비스를 제공하며 \n사내 소프트웨어 개발에 최적화\n∙이미지 모델은 창의적인 이미지를 생성하고 기존 이미지를 원하는 대로 바꿀 수 있도록 지원하며 \n저해상도 이미지의 고해상도 전환도 지원\nn IT 전문지 테크리퍼블릭(TechRepublic)은 온디바이스 AI가 주요 기술 트렌드로 부상했다며,'),
- Document(id='daa07073-ca44-44ed-b0d1-a80a1f24188b', metadata={'producer': 'Hancom PDF 1.3.0.542', 'creator': 'Hwp 2018 10.0.0.13462', 'creationdate': '2023-12-08T13:28:38+09:00', 'source': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'file_path': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'total_pages': 23, 'format': 'PDF 1.4', 'title': '', 'author': 'dj', 'subject': '', 'keywords': '', 'moddate': '2023-12-08T13:28:38+09:00', 'trapped': '', 'modDate': "D:20231208132838+09'00'", 'creationDate': "D:20231208132838+09'00'", 'page': 12}, page_content='2024년부터 가우스를 탑재한 삼성 스마트폰이 메타의 라마(Llama)2를 탑재한 퀄컴 기기 및 구글 \n어시스턴트를 적용한 구글 픽셀(Pixel)과 경쟁할 것으로 예상\n☞ 출처 : 삼성전자, ‘삼성 AI 포럼’서 자체 개발 생성형 AI ‘삼성 가우스’ 공개, 2023.11.08.\n삼성전자, ‘삼성 개발자 콘퍼런스 코리아 2023’ 개최, 2023.11.14.\nTechRepublic, Samsung Gauss: Samsung Research Reveals Generative AI, 2023.11.08.'),
- Document(id='53476498-e208-4527-9069-5e2425030d6f', metadata={'producer': 'Hancom PDF 1.3.0.542', 'creator': 'Hwp 2018 10.0.0.13462', 'creationdate': '2023-12-08T13:28:38+09:00', 'source': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'file_path': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'total_pages': 23, 'format': 'PDF 1.4', 'title': '', 'author': 'dj', 'subject': '', 'keywords': '', 'moddate': '2023-12-08T13:28:38+09:00', 'trapped': '', 'modDate': "D:20231208132838+09'00'", 'creationDate': "D:20231208132838+09'00'", 'page': 1}, page_content='2023년 12월호\nⅠ. 인공지능 산업 동향 브리프\n 1. 정책/법제 \n   ▹ 미국, 안전하고 신뢰할 수 있는 AI 개발과 사용에 관한 행정명령 발표  ························· 1\n   ▹ G7, 히로시마 AI 프로세스를 통해 AI 기업 대상 국제 행동강령에 합의··························· 2\n   ▹ 영국 AI 안전성 정상회의에 참가한 28개국, AI 위험에 공동 대응 선언··························· 3\n   ▹ 미국 법원, 예술가들이 생성 AI 기업에 제기한 저작권 소송 기각····································· 4\n   ▹ 미국 연방거래위원회, 저작권청에 소비자 보호와 경쟁 측면의 AI 의견서 제출················· 5\n   ▹ EU AI 법 3자 협상, 기반모델 규제 관련 견해차로 난항··················································· 6\n \n 2. 기업/산업 \n   ▹ 미국 프런티어 모델 포럼, 1,000만 달러 규모의 AI 안전 기금 조성································ 7\n   ▹ 코히어, 데이터 투명성 확보를 위한 데이터 출처 탐색기 공개  ······································· 8\n   ▹ 알리바바 클라우드, 최신 LLM ‘통이치엔원 2.0’ 공개 ······················································ 9\n   ▹ 삼성전자, 자체 개발 생성 AI ‘삼성 가우스’ 공개 ··························································· 10\n   ▹ 구글, 앤스로픽에 20억 달러 투자로 생성 AI 협력 강화 ················································ 11'),
- Document(id='eaaaba7a-592a-4c33-8e36-bcdb99e60c65', metadata={'producer': 'Hancom PDF 1.3.0.542', 'creator': 'Hwp 2018 10.0.0.13462', 'creationdate': '2023-12-08T13:28:38+09:00', 'source': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'file_path': 'data/SPRI_AI_Brief_2023년12월호_F.pdf', 'total_pages': 23, 'format': 'PDF 1.4', 'title': '', 'author': 'dj', 'subject': '', 'keywords': '', 'moddate': '2023-12-08T13:28:38+09:00', 'trapped': '', 'modDate': "D:20231208132838+09'00'", 'creationDate': "D:20231208132838+09'00'", 'page': 4}, page_content='보장하고 책임성을 강화\n∙산업계, 정부, 시민사회, 학계를 포함해 첨단 AI 시스템을 개발하는 조직 간 정보공유와 사고 발생 시 \n신고를 위해 협력하고, 위험 기반 접근방식을 토대로 개인정보보호 정책과 위험 완화 조치를 포함하는 \nAI 거버넌스와 위험 관리 정책을 마련\n∙AI 수명주기 전반에 걸쳐 물리보안, 사이버보안, 내부자 위협 보안을 포함한 강력한 보안 통제 구현\n∙사용자가 AI 생성 콘텐츠를 식별할 수 있도록 워터마크를 비롯하여 기술적으로 가능한 기법으로 \n신뢰할 수 있는 콘텐츠 인증과 출처 확인 메커니즘을 개발 및 구축 \n∙사회적 위험과 안전·보안 문제를 완화하는 연구와 효과적인 완화 대책에 우선 투자하고, 기후 위기 \n대응, 세계 보건과 교육 등 세계적 난제 해결을 위한 첨단 AI 시스템을 우선 개발\n∙국제 기술 표준의 개발 및 채택을 가속화하고, 개인정보와 지식재산권 보호를 위해 데이터 입력과 수집 \n시 적절한 보호 장치 구현\n☞ 출처: G7, Hiroshima Process International Code of Conduct for Advanced AI Systems, 2023.10.30.')]</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=469d7cea">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="6.-%ED%94%84%EB%A1%AC%ED%94%84%ED%8A%B8-%EC%83%9D%EC%84%B1(Create-Prompt)">6. 프롬프트 생성(Create Prompt)<a class="anchor-link" href="#6.-%ED%94%84%EB%A1%AC%ED%94%84%ED%8A%B8-%EC%83%9D%EC%84%B1(Create-Prompt)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0966f752">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
-<span class="w">    </span><span class="sd">"""You are an assistant for question-answering tasks. </span>
-<span class="sd">    Use the following pieces of retrieved context to answer the question. </span>
-<span class="sd">    If you don't know the answer, just say that you don't know. </span>
-<span class="sd">    Answer in Korean.</span>
-
-<span class="sd">    #Question: </span>
-<span class="sd">    {question} </span>
-<span class="sd">    #Context: </span>
-<span class="sd">    {context} </span>
-
-<span class="sd">    #Answer:"""</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span> <span class="o">=</span> <span class="n">SelfQueryRetriever</span><span class="o">.</span><span class="n">from_llm</span><span class="p">(</span>
+    <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+    <span class="n">vectorstore</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">,</span>
+    <span class="n">document_contents</span><span class="o">=</span><span class="s2">"Brief summary of a cosmetic product"</span><span class="p">,</span>
+    <span class="n">metadata_field_info</span><span class="o">=</span><span class="n">metadata_field_info</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -7842,86 +7660,26 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4a5fe0b7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a303e5ee">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h4 id="7.-%EC%96%B8%EC%96%B4%EB%AA%A8%EB%8D%B8(LLM)-%EC%83%9D%EC%84%B1">7. 언어모델(LLM) 생성<a class="anchor-link" href="#7.-%EC%96%B8%EC%96%B4%EB%AA%A8%EB%8D%B8(LLM)-%EC%83%9D%EC%84%B1">¶</a></h4>
+<h4 id="Query-%ED%85%8C%EC%8A%A4%ED%8A%B8">Query 테스트<a class="anchor-link" href="#Query-%ED%85%8C%EC%8A%A4%ED%8A%B8">¶</a></h4>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c3279c84">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bf6b2c66">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4f7cecbf">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="8.-%EC%B2%B4%EC%9D%B8(Chain)-%EC%83%9D%EC%84%B1">8. 체인(Chain) 생성<a class="anchor-link" href="#8.-%EC%B2%B4%EC%9D%B8(Chain)-%EC%83%9D%EC%84%B1">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b86a34df">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">chain</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">{</span><span class="s2">"context"</span><span class="p">:</span> <span class="n">retriever</span><span class="p">,</span> <span class="s2">"question"</span><span class="p">:</span> <span class="n">RunnablePassthrough</span><span class="p">()}</span>
-    <span class="o">|</span> <span class="n">prompt</span>
-    <span class="o">|</span> <span class="n">llm</span>
-    <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=607c45e2">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>체인에 쿼리(질문)을 입력하고 실행</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=96559461">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">question</span> <span class="o">=</span> <span class="s2">"삼성전자가 자체 개발한 AI 의 이름은?"</span>
-<span class="n">response</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"평점이 4.8 이상인 제품을 추천해주세요"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7934,14 +7692,404 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>삼성전자가 자체 개발한 AI의 이름은 '삼성 가우스'입니다.
-</pre>
+<pre>[Document(id='942f859b-2236-4d3b-a1f8-36418609605e', metadata={'year': 2024, 'user_rating': 4.9, 'category': '선케어'}, page_content='자외선 차단 기능이 있는 톤업 선크림, SPF50+/PA++++ 높은 자외선 차단 지수로 피부를 보호합니다.'),
+ Document(id='8fed47fd-b2ec-418e-a3dd-5030b1af7636', metadata={'category': '클렌징', 'year': 2023, 'user_rating': 4.8}, page_content='식물성 성분으로 만든 저자극 클렌징 오일, 메이크업과 노폐물을 부드럽게 제거합니다.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2c2ce85a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"2023년에 출시된 상품을 추천해주세요"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(id='06a60b0c-1ac9-49c7-a4ee-885fc9bc1632', metadata={'category': '메이크업', 'year': 2023, 'user_rating': 4.5}, page_content='24시간 지속되는 매트한 피니시의 파운데이션, 모공을 커버하고 자연스러운 피부 표현이 가능합니다.'),
+ Document(id='72b5848e-89d4-4a7c-8d42-874ebfde399e', metadata={'category': '스킨케어', 'user_rating': 4.6, 'year': 2023}, page_content='비타민 C 함유 브라이트닝 크림, 칙칙한 피부톤을 환하게 밝혀줍니다.'),
+ Document(id='8fed47fd-b2ec-418e-a3dd-5030b1af7636', metadata={'year': 2023, 'user_rating': 4.8, 'category': '클렌징'}, page_content='식물성 성분으로 만든 저자극 클렌징 오일, 메이크업과 노폐물을 부드럽게 제거합니다.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bb0785b2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"카테고리가 선케어인 상품을 추천해주세요"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(id='942f859b-2236-4d3b-a1f8-36418609605e', metadata={'year': 2024, 'user_rating': 4.9, 'category': '선케어'}, page_content='자외선 차단 기능이 있는 톤업 선크림, SPF50+/PA++++ 높은 자외선 차단 지수로 피부를 보호합니다.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5c20e6fe">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="s2">"카테고리가 메이크업인 상품 중에서 평점이 4.5 이상인 상품을 추천해주세요"</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(id='06a60b0c-1ac9-49c7-a4ee-885fc9bc1632', metadata={'category': '메이크업', 'year': 2023, 'user_rating': 4.5}, page_content='24시간 지속되는 매트한 피니시의 파운데이션, 모공을 커버하고 자연스러운 피부 표현이 가능합니다.')]</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c39f17d4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=900f6df2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<ul>
+<li><strong>가져올 문서의 수 지정 :<code>k</code></strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c88146f5">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span> <span class="o">=</span> <span class="n">SelfQueryRetriever</span><span class="o">.</span><span class="n">from_llm</span><span class="p">(</span>
+    <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+    <span class="n">vectorstore</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">,</span>
+    <span class="n">document_contents</span><span class="o">=</span><span class="s2">"Brief summary of a cosmetic product"</span><span class="p">,</span>
+    <span class="n">metadata_field_info</span><span class="o">=</span><span class="n">metadata_field_info</span><span class="p">,</span>
+    <span class="n">enable_limit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">search_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"k"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> 
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cfb1b7e6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"2023년에 출시된 상품을 추천해주세요"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(id='06a60b0c-1ac9-49c7-a4ee-885fc9bc1632', metadata={'user_rating': 4.5, 'year': 2023, 'category': '메이크업'}, page_content='24시간 지속되는 매트한 피니시의 파운데이션, 모공을 커버하고 자연스러운 피부 표현이 가능합니다.'),
+ Document(id='72b5848e-89d4-4a7c-8d42-874ebfde399e', metadata={'year': 2023, 'category': '스킨케어', 'user_rating': 4.6}, page_content='비타민 C 함유 브라이트닝 크림, 칙칙한 피부톤을 환하게 밝혀줍니다.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=53f653d1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EA%B5%AC%EC%A1%B0%ED%99%94%EB%90%9C-%EC%BF%BC%EB%A6%AC-%EC%B2%B4%EC%9D%B8-(query_constructor)">구조화된 쿼리 체인 (<code>query_constructor</code>)<a class="anchor-link" href="#%EA%B5%AC%EC%A1%B0%ED%99%94%EB%90%9C-%EC%BF%BC%EB%A6%AC-%EC%B2%B4%EC%9D%B8-(query_constructor)">¶</a></h3><ul>
+<li><strong>Self-query retriever의 핵심 요소는 <code>query constructor</code></strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b8811abb">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.query_constructor.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredQueryOutputParser</span><span class="p">,</span> <span class="n">get_query_constructor_prompt</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c5560dec">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li><strong>쿼리 생성기 프롬프트</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=930c2d2c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">prompt</span> <span class="o">=</span> <span class="n">get_query_constructor_prompt</span><span class="p">(</span>
+    <span class="s2">"Brief summary of a cosmetic product"</span><span class="p">,</span>  <span class="c1"># 문서 내용 설명</span>
+    <span class="n">metadata_field_info</span><span class="p">,</span>  <span class="c1"># 메타데이터 필드 정보</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7b18494f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>출력 파서</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=83fb714c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">output_parser</span> <span class="o">=</span> <span class="n">StructuredQueryOutputParser</span><span class="o">.</span><span class="n">from_components</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f7e30565">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>체인 생성</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f6141a0e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">query_constructor</span> <span class="o">=</span> <span class="n">prompt</span> <span class="o">|</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6c1fd902">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<ul>
+<li>생성된 쿼리 확인</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c2acc3bb">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">query_output</span> <span class="o">=</span> <span class="n">query_constructor</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"query"</span><span class="p">:</span> <span class="s2">"2023년도에 출시한 상품 중 평점이 4.5 이상인 상품중에서 스킨케어 제품을 추천해주세요"</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eebed3ff">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">query_output</span><span class="o">.</span><span class="n">filter</span><span class="o">.</span><span class="n">arguments</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Comparison(comparator=&lt;Comparator.EQ: 'eq'&gt;, attribute='year', value=2023),
+ Comparison(comparator=&lt;Comparator.GTE: 'gte'&gt;, attribute='user_rating', value=4.5),
+ Comparison(comparator=&lt;Comparator.EQ: 'eq'&gt;, attribute='category', value='스킨케어')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b5e319e6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EA%B5%AC%EC%A1%B0%ED%99%94%EB%90%9C-%EC%BF%BC%EB%A6%AC-%EB%B3%80%ED%99%98%EA%B8%B0(Structured-Query-Translator)">구조화된 쿼리 변환기(Structured Query Translator)<a class="anchor-link" href="#%EA%B5%AC%EC%A1%B0%ED%99%94%EB%90%9C-%EC%BF%BC%EB%A6%AC-%EB%B3%80%ED%99%98%EA%B8%B0(Structured-Query-Translator)">¶</a></h3><ul>
+<li><strong>이는 일반적인 <code>StructuredQuery</code> 객체를 사용 중인 vector store의 구문에 맞는 메타데이터 필터로 변환</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9110244c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.retrievers.self_query.chroma</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChromaTranslator</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b3f04b7d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span> <span class="o">=</span> <span class="n">SelfQueryRetriever</span><span class="p">(</span>
+    <span class="n">query_constructor</span><span class="o">=</span><span class="n">query_constructor</span><span class="p">,</span>  <span class="c1"># 이전에 생성한 query_constructor chain 을 지정</span>
+    <span class="n">vectorstore</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">,</span>  <span class="c1"># 벡터 저장소를 지정</span>
+    <span class="n">structured_query_translator</span><span class="o">=</span><span class="n">ChromaTranslator</span><span class="p">(),</span>  <span class="c1"># 쿼리 변환기</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=459e0924">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="s2">"2023년도에 출시한 상품 중 평점이 4.5 이상인 상품중에서 스킨케어 제품을 추천해주세요"</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(id='72b5848e-89d4-4a7c-8d42-874ebfde399e', metadata={'category': '스킨케어', 'year': 2023, 'user_rating': 4.6}, page_content='비타민 C 함유 브라이트닝 크림, 칙칙한 피부톤을 환하게 밝혀줍니다.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fbbbd1d1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7950,163 +8098,173 @@ a.anchor-link {
 <br/>
 <hr/>
 <br/>
+<h2 id="%EC%8B%9C%EA%B0%84-%EA%B0%80%EC%A4%91-%EB%B2%A1%ED%84%B0%EC%A0%80%EC%9E%A5%EC%86%8C-%EB%A6%AC%ED%8A%B8%EB%A6%AC%EB%B2%84(TimeWeightedVectorStoreRetriever)">시간 가중 벡터저장소 리트리버(<code>TimeWeightedVectorStoreRetriever</code>)<a class="anchor-link" href="#%EC%8B%9C%EA%B0%84-%EA%B0%80%EC%A4%91-%EB%B2%A1%ED%84%B0%EC%A0%80%EC%9E%A5%EC%86%8C-%EB%A6%AC%ED%8A%B8%EB%A6%AC%EB%B2%84(TimeWeightedVectorStoreRetriever)">¶</a></h2><ul>
+<li><p><strong>의미론적 유사성과 시간에 따른 감쇠를 결합해 사용하는 검색 도구</strong></p>
+<p>$\rightarrow$ <strong>문서 또는 데이터의 "신선함" 과 "관련성" 을 모두 고려하여 결과를 제공</strong></p>
+</li>
+</ul>
+<br/>
+<ul>
+<li><strong>스코어링 알고리즘</strong><ul>
+<li><code>semantic_similarity</code> : 문서 또는 데이터 간의 의미적 유사도</li>
+<li><code>decay_rate</code> : 시간이 지남에 따라 점수가 얼마나 감소하는지를 나타내는 비율</li>
+<li><code>hours_passed</code>: 객체가 마지막으로 접근된 후부터 현재까지 경과한 시간(시간 단위)</li>
+</ul>
+</li>
+</ul>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mtext>semantic_similarity</mtext>
+<mo>+</mo>
+<mo stretchy="false">(</mo>
+<mn>1.0</mn>
+<mo>−</mo>
+<mtext>decay_rate</mtext>
+<msup>
+<mo stretchy="false">)</mo>
+<mrow data-mjx-texclass="ORD">
+<mi>h</mi>
+<mi>o</mi>
+<mi>u</mi>
+<mi>r</mi>
+<msub>
+<mi>s</mi>
+<mi>p</mi>
+</msub>
+<mi>a</mi>
+<mi>s</mi>
+<mi>s</mi>
+<mi>e</mi>
+<mi>d</mi>
+</mrow>
+</msup>
+</math>
+<br/>
+<ul>
+<li><p>객체가 마지막으로 접근된 시간을 기준으로 하여 "정보의 신선함" 을 평가</p>
+<p>$\rightarrow$ <strong>자주 접근되는 객체는 시간이 지나도 높은 점수를 유지하며, 이를 통해 자주 사용되거나 중요하게 여겨지는 정보가 검색 결과 상위에 위치할 가능성이 높아짐</strong></p>
+</li>
+<li><p>이런 방식은 최신성과 관련성을 모두 고려하는 동적인 검색 결과를 제공하며, <code>decay_rate</code> 는 <strong>리트리버의 객체가 생성된 이후가 아니라 마지막으로 액세스된 이후 경과된 시간을 의미</strong></p>
+<p>$\rightarrow$ <strong>자주 액세스하는 객체는 '최신'으로 유지</strong></p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=039a32f5">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c5810c20">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="%EB%84%A4%EC%9D%B4%EB%B2%84-%EB%89%B4%EC%8A%A4-%EA%B8%B0%EB%B0%98-QA(Question-Answering)-%EC%B1%97%EB%B4%87">네이버 뉴스 기반 QA(Question-Answering) 챗봇<a class="anchor-link" href="#%EB%84%A4%EC%9D%B4%EB%B2%84-%EB%89%B4%EC%8A%A4-%EA%B8%B0%EB%B0%98-QA(Question-Answering)-%EC%B1%97%EB%B4%87">¶</a></h2>
+<br/>
+<h3 id="%EB%82%AE%EC%9D%80-%EA%B0%90%EC%87%A0%EC%9C%A8(low-decay_rate)">낮은 감쇠율(low decay_rate)<a class="anchor-link" href="#%EB%82%AE%EC%9D%80-%EA%B0%90%EC%87%A0%EC%9C%A8(low-decay_rate)">¶</a></h3>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=655e54c3">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=04b119c6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">bs4</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain</span><span class="w"> </span><span class="kn">import</span> <span class="n">hub</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebBaseLoader</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">faiss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.docstore</span><span class="w"> </span><span class="kn">import</span> <span class="n">InMemoryDocstore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.retrievers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeWeightedVectorStoreRetriever</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">FAISS</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrOutputParser</span><span class="p">,</span> <span class="n">JsonOutputParser</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnablePassthrough</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span><span class="p">,</span> <span class="n">OpenAIEmbeddings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptTemplate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIEmbeddings</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=63b93b9e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">embeddings_model</span> <span class="o">=</span> <span class="n">OpenAIEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"text-embedding-3-small"</span><span class="p">)</span>
+
+<span class="c1"># 벡터 저장소 초기화합니다.</span>
+<span class="n">embedding_size</span> <span class="o">=</span> <span class="mi">1536</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexFlatL2</span><span class="p">(</span><span class="n">embedding_size</span><span class="p">)</span>
+<span class="n">vectorstore</span> <span class="o">=</span> <span class="n">FAISS</span><span class="p">(</span><span class="n">embeddings_model</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">InMemoryDocstore</span><span class="p">({}),</span> <span class="p">{})</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d02ee938">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=73d07000">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="1.-%EB%AC%B8%EC%84%9C-%EB%A1%9C%EB%93%9C-(%ED%81%AC%EB%A1%A4%EB%A7%81)">1. 문서 로드 (크롤링)<a class="anchor-link" href="#1.-%EB%AC%B8%EC%84%9C-%EB%A1%9C%EB%93%9C-(%ED%81%AC%EB%A1%A4%EB%A7%81)">¶</a></h4>
+<ul>
+<li>시간 가중치가 적용된 벡터 저장소 검색기를 초기화</li>
+</ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b12e2f8a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f69a2e54">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">bs4</span><span class="o">.</span><span class="n">SoupStrainer</span><span class="p">(</span>
-    <span class="s2">"div"</span><span class="p">,</span>
-    <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"class"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"newsct_article _article_body"</span><span class="p">,</span> <span class="s2">"media_end_head_title"</span><span class="p">]},</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span> <span class="o">=</span> <span class="n">TimeWeightedVectorStoreRetriever</span><span class="p">(</span>
+    <span class="n">vectorstore</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">,</span> <span class="n">decay_rate</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[23]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;SoupStrainer name=[&lt;TagNameMatchRule string=div pattern=None function=None present=None&gt;] attrs=defaultdict(&lt;class 'list'&gt;, {'class': [&lt;AttributeValueMatchRule string=newsct_article _article_body pattern=None function=None present=None&gt;, &lt;AttributeValueMatchRule string=media_end_head_title pattern=None function=None present=None&gt;]}) string=[]&gt;</pre>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c958fd8d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>예제 데이터</li>
+</ul>
 </div>
 </div>
 </div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b036cf50">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8ab8e79a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">loader</span> <span class="o">=</span> <span class="n">WebBaseLoader</span><span class="p">(</span>
-    <span class="n">web_paths</span><span class="o">=</span><span class="p">(</span><span class="s2">"https://n.news.naver.com/article/437/0000378416"</span><span class="p">,),</span>
-    <span class="n">bs_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-        <span class="n">parse_only</span><span class="o">=</span><span class="n">bs4</span><span class="o">.</span><span class="n">SoupStrainer</span><span class="p">(</span>
-            <span class="s2">"div"</span><span class="p">,</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s2">"class"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"newsct_article _article_body"</span><span class="p">,</span> <span class="s2">"media_end_head_title"</span><span class="p">]},</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">yesterday</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">retriever</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">Document</span><span class="p">(</span>
+            <span class="n">page_content</span><span class="o">=</span><span class="s2">"테디노트 구독해 주세요."</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"last_accessed_at"</span><span class="p">:</span> <span class="n">yesterday</span><span class="p">},</span>
+        <span class="p">),</span>
+        <span class="n">Document</span><span class="p">(</span>
+            <span class="n">page_content</span><span class="o">=</span><span class="s2">"테디노트 구독 해주실꺼죠? Please!"</span>
         <span class="p">)</span>
-    <span class="p">),</span>
+    <span class="p">]</span>
 <span class="p">)</span>
-
-<span class="n">docs</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"문서의 수: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=43bc4bfb">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">docs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-출산 직원에게 '1억원' 쏜다…회사의 파격적 저출생 정책
-
-
-[앵커]올해 아이 낳을 계획이 있는 가족이라면 솔깃할 소식입니다. 정부가 저출생 대책으로 매달 주는 부모 급여, 0세 아이는 100만원으로 올렸습니다. 여기에 첫만남이용권, 아동수당까지 더하면 아이 돌까지 1년 동안 1520만원을 받습니다. 지자체도 경쟁하듯 지원에 나섰습니다. 인천시는 새로 태어난 아기, 18살될 때까지 1억원을 주겠다. 광주시도 17살될 때까지 7400만원 주겠다고 했습니다. 선거 때면 나타나서 아이 낳으면 현금 주겠다고 밝힌 사람이 있었죠. 과거에는 표만 노린 '황당 공약'이라는 비판이 따라다녔습니다. 그런데 지금은 출산율이 이보다 더 나쁠 수 없다보니, 이런 현금성 지원을 진지하게 정책화 하는 상황까지 온 겁니다. 게다가 기업들도 뛰어들고 있습니다. 이번에는 출산한 직원에게 단번에 1억원을 주겠다는 회사까지 나타났습니다.이상화 기자가 취재했습니다.[기자]한 그룹사가 오늘 파격적인 저출생 정책을 내놨
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cff8b75e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="2.-%EB%AC%B8%EC%84%9C-%EB%B6%84%ED%95%A0">2. 문서 분할<a class="anchor-link" href="#2.-%EB%AC%B8%EC%84%9C-%EB%B6%84%ED%95%A0">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=33c85177">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [50]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">text_splitter</span> <span class="o">=</span> <span class="n">RecursiveCharacterTextSplitter</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-
-<span class="n">splits</span> <span class="o">=</span> <span class="n">text_splitter</span><span class="o">.</span><span class="n">split_documents</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
-<span class="nb">len</span><span class="p">(</span><span class="n">splits</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8117,145 +8275,245 @@ a.anchor-link {
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[50]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>3</pre>
+<pre>['9cde131a-80d2-41cf-a769-c3692a046d93',
+ '190a65f3-42dc-454b-a3d4-fbe247d9e48f']</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a84a95f3">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b8d538e3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="3.-%EC%9E%84%EB%B2%A0%EB%94%A9-&amp;-%EB%B2%A1%ED%84%B0-%EC%8A%A4%ED%86%A0%EC%96%B4-&amp;-%EB%A6%AC%ED%8A%B8%EB%A6%AC%EB%B2%84-%EC%83%9D%EC%84%B1">3. 임베딩 &amp; 벡터 스토어 &amp; 리트리버 생성<a class="anchor-link" href="#3.-%EC%9E%84%EB%B2%A0%EB%94%A9-&amp;-%EB%B2%A1%ED%84%B0-%EC%8A%A4%ED%86%A0%EC%96%B4-&amp;-%EB%A6%AC%ED%8A%B8%EB%A6%AC%EB%B2%84-%EC%83%9D%EC%84%B1">¶</a></h4>
+<ul>
+<li><p><strong>낮은 감쇠율로 인하여, 벡터 스토어에 먼저 들어간 입력데이터의 최신성이 절하되지 않음</strong></p>
+<p>$\rightarrow$ 처음 들어간 문서가 출력</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a1b08bad">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=076ef5e9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [51]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">FAISS</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">splits</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">OpenAIEmbeddings</span><span class="p">())</span>
-
-<span class="n">retriever</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">as_retriever</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"테디노트"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5461dab0">
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[16]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(metadata={'last_accessed_at': datetime.datetime(2025, 11, 24, 13, 27, 57, 306416), 'created_at': datetime.datetime(2025, 11, 24, 13, 27, 55, 262055), 'buffer_idx': 0}, page_content='테디노트 구독해 주세요.')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9e75e8cf">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h4 id="4.-%ED%94%84%EB%A1%B4%ED%94%84%ED%8A%B8-%EC%83%9D%EC%84%B1">4. 프롴프트 생성<a class="anchor-link" href="#4.-%ED%94%84%EB%A1%B4%ED%94%84%ED%8A%B8-%EC%83%9D%EC%84%B1">¶</a></h4>
+<h3 id="%EB%86%92%EC%9D%8C-%EA%B0%90%EC%87%A0%EC%9C%A8(high-decay_rate)">높음 감쇠율(high decay_rate)<a class="anchor-link" href="#%EB%86%92%EC%9D%8C-%EA%B0%90%EC%87%A0%EC%9C%A8(high-decay_rate)">¶</a></h3><ul>
+<li><strong>높은 감쇠율은 최신성 점수가 빠르게 0으로 수렴</strong></li>
+</ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=950d8d45">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=18316f9c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
-<span class="w">    </span><span class="sd">"""당신은 질문-답변(Question-Answering)을 수행하는 친절한 AI 어시스턴트입니다. 당신의 임무는 주어진 문맥(context) 에서 주어진 질문(question) 에 답하는 것입니다.</span>
-<span class="sd">    검색된 다음 문맥(context) 을 사용하여 질문(question) 에 답하세요. 만약, 주어진 문맥(context) 에서 답을 찾을 수 없다면, 답을 모른다면 `주어진 정보에서 질문에 대한 정보를 찾을 수 없습니다` 라고 답하세요.</span>
-<span class="sd">    한글로 답변해 주세요. 단, 기술적인 용어나 이름은 번역하지 않고 그대로 사용해 주세요.</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">embeddings_model</span> <span class="o">=</span> <span class="n">OpenAIEmbeddings</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"text-embedding-3-small"</span><span class="p">)</span>
 
-<span class="sd">    #Question: </span>
-<span class="sd">    {question} </span>
+<span class="n">embedding_size</span> <span class="o">=</span> <span class="mi">1536</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexFlatL2</span><span class="p">(</span><span class="n">embedding_size</span><span class="p">)</span>
+<span class="n">vectorstore</span> <span class="o">=</span> <span class="n">FAISS</span><span class="p">(</span><span class="n">embeddings_model</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">InMemoryDocstore</span><span class="p">({}),</span> <span class="p">{})</span>
 
-<span class="sd">    #Context: </span>
-<span class="sd">    {context} </span>
-
-<span class="sd">    #Answer:"""</span>
+<span class="n">retriever</span> <span class="o">=</span> <span class="n">TimeWeightedVectorStoreRetriever</span><span class="p">(</span>
+    <span class="n">vectorstore</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">,</span> <span class="n">decay_rate</span><span class="o">=</span><span class="mf">0.999</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c0f1241e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="5.-%EC%96%B8%EC%96%B4-%EB%AA%A8%EB%8D%B8">5. 언어 모델<a class="anchor-link" href="#5.-%EC%96%B8%EC%96%B4-%EB%AA%A8%EB%8D%B8">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=dbb51f2e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b234e2ad">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [59]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=570d3f3e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="6.-%EC%B2%B4%EC%9D%B8-%EC%83%9D%EC%84%B1">6. 체인 생성<a class="anchor-link" href="#6.-%EC%B2%B4%EC%9D%B8-%EC%83%9D%EC%84%B1">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=231ce9f0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [60]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">rag_chain</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">{</span><span class="s2">"context"</span><span class="p">:</span> <span class="n">retriever</span><span class="p">,</span> <span class="s2">"question"</span><span class="p">:</span> <span class="n">RunnablePassthrough</span><span class="p">()}</span>
-    <span class="o">|</span> <span class="n">prompt</span>
-    <span class="o">|</span> <span class="n">llm</span>
-    <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">yesterday</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">retriever</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">Document</span><span class="p">(</span>
+            <span class="n">page_content</span><span class="o">=</span><span class="s2">"테디노트 구독해 주세요."</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"last_accessed_at"</span><span class="p">:</span> <span class="n">yesterday</span><span class="p">},</span>
+        <span class="p">),</span>
+        <span class="n">Document</span><span class="p">(</span>
+            <span class="n">page_content</span><span class="o">=</span><span class="s2">"테디노트 구독 해주실꺼죠? Please!"</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6b301ed9">
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>['973b6e4e-8a67-4728-bb9c-6a90a9c48399',
+ '99b5d94b-ed59-419a-8e6c-aaab7a299c88']</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9ee98292">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li><p><strong>낮은 감쇠율로 인하여, 벡터 스토어에 먼저 들어간 입력데이터의 최신성이 절하</strong></p>
+<p>$\rightarrow$ 마지막에 들어간 문서가 출력</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=40cda425">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [62]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"부영그룹의 출산 장려 정책에 대해 설명해주세요."</span><span class="p">))</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"테디노트"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[20]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>[Document(metadata={'last_accessed_at': datetime.datetime(2025, 11, 24, 13, 31, 14, 156252), 'created_at': datetime.datetime(2025, 11, 24, 13, 31, 8, 257829), 'buffer_idx': 3}, page_content='테디노트 구독 해주실꺼죠? Please!')]</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=66f7faba">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EA%B0%90%EC%87%A0%EC%9C%A8(decay_rate)">감쇠율(decay_rate)<a class="anchor-link" href="#%EA%B0%90%EC%87%A0%EC%9C%A8(decay_rate)">¶</a></h3><ul>
+<li><p><strong><code>decay_rate</code> 를 매우 작게 설정한 경우, 감쇠율(즉, 정보를 망각하는 비율)이 매우 낮기 때문에 정보를 거의 잊지 않음</strong></p>
+<p>$\rightarrow$ <strong>최신 정보이든 오래된 정보든 시간 가중치 차이가 거의 없습니다. 이럴때는 유사도에 더 높은 점수</strong></p>
+</li>
+<li><p><strong><code>decay_rate</code> 를 매우 높게 설정한 경우, 감쇠율(즉, 정보를 망각하는 비율)이 매우 높기 때문에 정보를 거의 다 잊어버림</strong></p>
+<p>$\rightarrow$ <strong>최신 정보에 더 높은 점수</strong></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c74586c0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EA%B0%90%EC%87%A0%EC%9C%A8-%EC%A1%B0%EC%A0%95">감쇠율 조정<a class="anchor-link" href="#%EA%B0%90%EC%87%A0%EC%9C%A8-%EC%A1%B0%EC%A0%95">¶</a></h4><ul>
+<li>시간 구성 요소를 모의(mock) 테스트</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b9615710">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">mock_now</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bce6f013">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li><code>mock_now</code> 함수를 사용하여 현재 시간을 변경하면서 검색 결과를 테스트<ul>
+<li>만약 너무 오래전의 시간으로 설정하면, <code>decay_rate</code> 계산시 오류가 발생</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b3a6d6a2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="n">mock_now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">00</span><span class="p">,</span> <span class="mi">00</span><span class="p">)):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"테디노트"</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -8268,14 +8526,14 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>부영그룹의 출산 장려 정책은 다음과 같습니다. 2021년 이후 태어난 직원 자녀에게 1억원씩, 총 70억원을 지원하며, 이 정책을 앞으로도 이어갈 계획입니다. 연년생과 쌍둥이 자녀가 있는 경우 총 2억원을 받을 수 있습니다. 또한, 셋째 아이를 낳는 경우 국민주택을 제공하겠다는 계획도 밝혔습니다. 이러한 정책은 출산한 직원에게 금전적인 지원을 통해 경제적 부담을 덜어주고, 출산을 장려하기 위한 것입니다.
+<pre>[Document(metadata={'last_accessed_at': MockDateTime(2025, 11, 23, 0, 0), 'created_at': datetime.datetime(2025, 11, 24, 13, 31, 8, 257829), 'buffer_idx': 3}, page_content='테디노트 구독 해주실꺼죠? Please!')]
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3d439914">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aa8ecaa7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
