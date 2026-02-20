@@ -1,0 +1,11 @@
+*.env
+*.txt
+*.pkl
+/data/*.json
+cache/
+chroma_db/
+tmp/
+images/
+prompts/
+faiss_db/
+*랭그래프.pdf
